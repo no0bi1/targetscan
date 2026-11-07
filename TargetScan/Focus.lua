@@ -203,6 +203,43 @@ SLASH_TARGETSCANFOCUSNAME1 = "/focusname"
 SLASH_TARGETSCANFOCUSNAME2 = "/tsfocusname"
 SlashCmdList["TARGETSCANFOCUSNAME"] = FocusNameCommand
 
+-- pfUI accepts either a spell name or a Lua function expression for
+-- /castfocus. Cache compiled function expressions so repeated casts do not
+-- compile the same string every time.
+local focusCastFunctions = {}
+
+local function GetFocusCastFunction(message)
+    local cached = focusCastFunctions[message]
+    if cached ~= nil then
+        return cached or nil
+    end
+
+    local chunk = loadstring("return " .. message)
+    if not chunk then
+        focusCastFunctions[message] = false
+        return nil
+    end
+
+    local ok, value = pcall(chunk)
+    if ok and type(value) == "function" then
+        focusCastFunctions[message] = value
+        return value
+    end
+
+    focusCastFunctions[message] = false
+    return nil
+end
+
+local function RestorePreviousTarget(previousGUID, previousPlayer)
+    if previousGUID and previousGUID ~= "0x0000000000000000" then
+        TargetUnit(previousGUID)
+    elseif previousPlayer then
+        TargetUnit("player")
+    else
+        TargetLastTarget()
+    end
+end
+
 local function CastFocusCommand(msg)
     if not msg or msg == "" then return end
 
@@ -214,9 +251,29 @@ local function CastFocusCommand(msg)
         return
     end
 
-    -- ClassicAPI accepts the focus GUID as CastSpellByName's target argument.
-    -- This leaves the player's current target untouched.
-    CastSpellByName(msg, focusGUID)
+    local func = GetFocusCastFunction(msg)
+
+    -- Spell casts use ClassicAPI's GUID-targeted path and never swap target.
+    if not func then
+        CastSpellByName(msg, focusGUID)
+        return
+    end
+
+    -- Lua-function casts need a brief target swap, matching pfUI's behavior.
+    local previousGUID = UnitGUID("target")
+    local previousPlayer = UnitIsUnit("target", "player")
+
+    TargetUnit(focusGUID)
+    if UnitGUID("target") ~= focusGUID then
+        RestorePreviousTarget(previousGUID, previousPlayer)
+        if UIErrorsFrame then
+            UIErrorsFrame:AddMessage(SPELL_FAILED_BAD_TARGETS, 1, 0, 0)
+        end
+        return
+    end
+
+    func()
+    RestorePreviousTarget(previousGUID, previousPlayer)
 end
 
 SLASH_TARGETSCANCASTFOCUS1 = "/castfocus"
