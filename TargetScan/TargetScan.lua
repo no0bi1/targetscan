@@ -567,9 +567,11 @@ local function CreateFocusFrame(name, unit, title)
     frame:SetWidth(180)
     frame:SetHeight(62)
     frame:SetFrameStrata("MEDIUM")
-    frame:SetMovable(true)
     frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
+    if unit == "focus" then
+        frame:SetMovable(true)
+        frame:RegisterForDrag("LeftButton")
+    end
     frame:SetClampedToScreen(true)
     frame:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -703,6 +705,9 @@ end
 
 local focus = CreateFocusFrame("TargetScanFocusFrame", "focus", "Focus")
 local focusTarget = CreateFocusFrame("TargetScanFocusTargetFrame", "focustarget", "Focus Target")
+-- Make the target pane a child of the main frame so it follows every movement
+-- and is hidden together with it. It is not independently movable.
+focusTarget:SetParent(focus)
 focusFrames.focus = focus
 focusFrames.focustarget = focusTarget
 
