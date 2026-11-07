@@ -579,13 +579,17 @@ local function CreateFocusFrame(name, unit, title)
     })
     frame:SetBackdropColor(0, 0, 0, 0.85)
 
-    frame:SetScript("OnDragStart", function()
-        this:StartMoving()
-    end)
-    frame:SetScript("OnDragStop", function()
-        this:StopMovingOrSizing()
-        SaveFramePosition(this, this.unit == "focus" and "focusPos" or "focusTargetPos")
-    end)
+    -- Only the main focus frame is draggable; the focus target pane is
+    -- anchored to its right edge and follows it.
+    if unit == "focus" then
+        frame:SetScript("OnDragStart", function()
+            this:StartMoving()
+        end)
+        frame:SetScript("OnDragStop", function()
+            this:StopMovingOrSizing()
+            SaveFramePosition(this, "focusPos")
+        end)
+    end
 
     frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     frame:SetScript("OnClick", function()
@@ -603,14 +607,16 @@ local function CreateFocusFrame(name, unit, title)
 
     local nameText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     nameText:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -2)
-    nameText:SetWidth(166)
+    if unit == "focus" then
+        nameText:SetWidth(166)
+    end
     nameText:SetJustifyH("LEFT")
     nameText:SetText("")
     frame.nameText = nameText
 
     local health = CreateFrame("StatusBar", nil, frame)
     health:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 14)
-    health:SetWidth(166)
+    health:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -7, 14)
     health:SetHeight(10)
     health:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
     health:SetStatusBarColor(0.15, 0.75, 0.15)
@@ -628,7 +634,7 @@ local function CreateFocusFrame(name, unit, title)
 
     local power = CreateFrame("StatusBar", nil, frame)
     power:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 7)
-    power:SetWidth(166)
+    power:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -7, 7)
     power:SetHeight(5)
     power:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
     power:SetStatusBarColor(0.1, 0.35, 0.9)
@@ -665,6 +671,17 @@ local function UpdateFocusFrame(frame)
     frame.health:SetValue(health or 0)
     frame.healthText:SetText(tostring(health or 0) .. " / " .. tostring(healthMax))
 
+    -- Focus target pane: width follows the longest of name / title / hp text,
+    -- and the hp/power bars stretch with it.
+    if unit == "focustarget" then
+        local w = frame.nameText:GetStringWidth()
+        local lw = frame.label:GetStringWidth()
+        local hw = frame.healthText:GetStringWidth()
+        if lw > w then w = lw end
+        if hw > w then w = hw end
+        frame:SetWidth(math.max(w + 14 + 4, 70))
+    end
+
     local power, powerMax = UnitMana(unit), UnitManaMax(unit)
     powerMax = powerMax and powerMax > 0 and powerMax or 1
     frame.power:SetMinMaxValues(0, powerMax)
@@ -689,8 +706,15 @@ local focusTarget = CreateFocusFrame("TargetScanFocusTargetFrame", "focustarget"
 focusFrames.focus = focus
 focusFrames.focustarget = focusTarget
 
+-- Focus target pane sits flush against the right edge of the focus frame.
+-- Tweak the x/y offsets here (negative x overlaps the border slightly).
+local function AnchorFocusTarget()
+    focusTarget:ClearAllPoints()
+    focusTarget:SetPoint("TOPLEFT", focus, "TOPRIGHT", -2, 0)
+end
+
 RestoreFramePosition(focus, "focusPos", "BOTTOMLEFT", UIParent, "BOTTOM", 220, 220)
-RestoreFramePosition(focusTarget, "focusTargetPos", "BOTTOMLEFT", focus, "TOP", 0, 10)
+AnchorFocusTarget()
 
 local function RefreshFocusFrames()
     UpdateFocusFrame(focus)
@@ -702,7 +726,7 @@ local focusLoader = CreateFrame("Frame")
 focusLoader:RegisterEvent("VARIABLES_LOADED")
 focusLoader:SetScript("OnEvent", function()
     RestoreFramePosition(focus, "focusPos", "BOTTOMLEFT", UIParent, "BOTTOM", 220, 220)
-    RestoreFramePosition(focusTarget, "focusTargetPos", "BOTTOMLEFT", focus, "TOP", 0, 10)
+    AnchorFocusTarget()
     RefreshFocusFrames()
 end)
 
