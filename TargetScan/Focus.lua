@@ -147,6 +147,16 @@ local function RefreshFocusFrames()
     UpdateFocusFrame(focusTarget)
 end
 
+-- SavedVariables are not populated until VARIABLES_LOADED.
+local focusLoader = CreateFrame("Frame")
+focusLoader:RegisterEvent("VARIABLES_LOADED")
+focusLoader:SetScript("OnEvent", function()
+    RestoreFramePosition(focus, "focusPos", "BOTTOMLEFT", UIParent, "BOTTOM", 220, 220)
+    RestoreFramePosition(focusTarget, "focusTargetPos", "BOTTOMLEFT", focus, "TOP", 0, 10)
+    RefreshFocusFrames()
+end)
+
+
 local focusEvents = CreateFrame("Frame")
 focusEvents:RegisterEvent("PLAYER_FOCUS_CHANGED")
 focusEvents:RegisterEvent("UNIT_HEALTH")
