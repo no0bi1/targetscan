@@ -565,7 +565,7 @@ local function CreateFocusFrame(name, unit, title)
     local frame = CreateFrame("Button", name, UIParent)
     frame.unit = unit
     frame:SetWidth(180)
-    frame:SetHeight(46)
+    frame:SetHeight(62)
     frame:SetFrameStrata("MEDIUM")
     frame:SetMovable(true)
     frame:EnableMouse(true)
