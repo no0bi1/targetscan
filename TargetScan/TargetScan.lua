@@ -66,6 +66,59 @@ title:SetText("Target Scan")
 local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
 
+-- Focus command help button and compact help window.
+local focusHelp = CreateFrame("Frame", "TargetScanFocusHelpFrame", UIParent)
+focusHelp:SetWidth(300)
+focusHelp:SetHeight(205)
+focusHelp:SetFrameStrata("DIALOG")
+focusHelp:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+focusHelp:SetBackdrop({
+    bgFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Background",
+    edgeFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Border",
+    tile = true,
+    tileSize = 32,
+    edgeSize = 32,
+    insets = { left = 11, right = 12, top = 12, bottom = 11 }
+})
+focusHelp:Hide()
+tinsert(UISpecialFrames, "TargetScanFocusHelpFrame")
+
+local focusHelpTitle = focusHelp:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+focusHelpTitle:SetPoint("TOP", focusHelp, "TOP", 0, -15)
+focusHelpTitle:SetText("Focus Commands")
+
+local focusHelpClose = CreateFrame("Button", nil, focusHelp, "UIPanelCloseButton")
+focusHelpClose:SetPoint("TOPRIGHT", focusHelp, "TOPRIGHT", -4, -4)
+
+local focusHelpText = focusHelp:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+focusHelpText:SetPoint("TOPLEFT", focusHelp, "TOPLEFT", 18, -38)
+focusHelpText:SetWidth(264)
+focusHelpText:SetJustifyH("LEFT")
+focusHelpText:SetJustifyV("TOP")
+focusHelpText:SetText(
+    "|cffffd200Standard commands|r\\n" ..
+    "|cffffffff/focus|r - Set your current target as focus.\\n" ..
+    "|cffffffff/clearfocus|r - Clear your current focus.\\n\\n" ..
+    "|cffffd200TargetScan commands|r\\n" ..
+    "|cffffffff/focusname name|r - Set focus by player name.\\n" ..
+    "|cffffffff/castfocus spell|r - Cast a spell on your focus without changing your target.\\n" ..
+    "|cffffffff/swapfocus|r - Swap your target and focus.\\n\\n" ..
+    "|cffaaaaaaAliases: /tsfocusname, /tscastfocus, /tsswapfocus|r"
+)
+
+local focusHelpButton = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+focusHelpButton:SetWidth(22)
+focusHelpButton:SetHeight(22)
+focusHelpButton:SetPoint("RIGHT", close, "LEFT", 2, 0)
+focusHelpButton:SetText("?")
+focusHelpButton:SetScript("OnClick", function()
+    if focusHelp:IsShown() then
+        focusHelp:Hide()
+    else
+        focusHelp:Show()
+    end
+end)
+
 ---------------------------------------------------------------
 -- Name edit box
 ---------------------------------------------------------------
