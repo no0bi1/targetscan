@@ -587,6 +587,12 @@ local function CreateFocusFrame(name, unit, title)
         SaveFramePosition(this, this.unit == "focus" and "focusPos" or "focusTargetPos")
     end)
 
+    frame:SetScript("OnClick", function()
+        if UnitExists(this.unit) then
+            TargetUnit(this.unit)
+        end
+    end)
+
     local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     label:SetPoint("TOPLEFT", frame, "TOPLEFT", 7, -5)
     label:SetText(title)
