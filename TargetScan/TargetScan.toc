@@ -3,4 +3,3 @@
 ## Notes: Target scanner with ClassicAPI focus management.
 ## SavedVariables: TargetScanDB
 TargetScan.lua
-Focus.lua
