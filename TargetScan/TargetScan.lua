@@ -600,7 +600,7 @@ local function CreateFocusFrame(name, unit, title)
     frame.nameText = nameText
 
     local health = CreateFrame("StatusBar", nil, frame)
-    health:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 7)
+    health:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 14)
     health:SetWidth(166)
     health:SetHeight(10)
     health:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
@@ -618,7 +618,7 @@ local function CreateFocusFrame(name, unit, title)
     frame.healthText = healthText
 
     local power = CreateFrame("StatusBar", nil, frame)
-    power:SetPoint("BOTTOMLEFT", health, "TOPLEFT", 0, 2)
+    power:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 7)
     power:SetWidth(166)
     power:SetHeight(5)
     power:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
