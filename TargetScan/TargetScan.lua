@@ -72,6 +72,10 @@ focusHelp:SetWidth(300)
 focusHelp:SetHeight(205)
 focusHelp:SetFrameStrata("DIALOG")
 focusHelp:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+focusHelp:SetMovable(true)
+focusHelp:EnableMouse(true)
+focusHelp:SetClampedToScreen(true)
+focusHelp:RegisterForDrag("LeftButton")
 focusHelp:SetBackdrop({
     bgFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Background",
     edgeFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Border",
@@ -80,8 +84,32 @@ focusHelp:SetBackdrop({
     edgeSize = 32,
     insets = { left = 11, right = 12, top = 12, bottom = 11 }
 })
+focusHelp:SetScript("OnDragStart", function()
+    this:StartMoving()
+end)
+focusHelp:SetScript("OnDragStop", function()
+    this:StopMovingOrSizing()
+
+    local point, _, relativePoint, x, y = this:GetPoint()
+    if type(TargetScanDB) ~= "table" then
+        TargetScanDB = {}
+    end
+    TargetScanDB.focusHelpPos = { point, relativePoint, x, y }
+end)
 focusHelp:Hide()
 tinsert(UISpecialFrames, "TargetScanFocusHelpFrame")
+
+local focusHelpLoader = CreateFrame("Frame")
+focusHelpLoader:RegisterEvent("VARIABLES_LOADED")
+focusHelpLoader:SetScript("OnEvent", function()
+    if type(TargetScanDB) == "table" then
+        local p = TargetScanDB.focusHelpPos
+        if type(p) == "table" and p[1] and p[2] and p[3] and p[4] then
+            focusHelp:ClearAllPoints()
+            focusHelp:SetPoint(p[1], UIParent, p[2], p[3], p[4])
+        end
+    end
+end)
 
 local focusHelpTitle = focusHelp:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 focusHelpTitle:SetPoint("TOP", focusHelp, "TOP", 0, -15)
