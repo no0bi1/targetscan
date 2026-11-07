@@ -96,13 +96,13 @@ focusHelpText:SetWidth(264)
 focusHelpText:SetJustifyH("LEFT")
 focusHelpText:SetJustifyV("TOP")
 focusHelpText:SetText(
-    "|cffffd200Standard commands|r\\n" ..
-    "|cffffffff/focus|r - Set your current target as focus.\\n" ..
-    "|cffffffff/clearfocus|r - Clear your current focus.\\n\\n" ..
-    "|cffffd200TargetScan commands|r\\n" ..
-    "|cffffffff/focusname name|r - Set focus by player name.\\n" ..
-    "|cffffffff/castfocus spell|r - Cast a spell on your focus without changing your target.\\n" ..
-    "|cffffffff/swapfocus|r - Swap your target and focus.\\n\\n" ..
+    "|cffffd200Standard commands|r\n" ..
+    "|cffffffff/focus|r - Set your current target as focus.\n" ..
+    "|cffffffff/clearfocus|r - Clear your current focus.\n\n" ..
+    "|cffffd200TargetScan commands|r\n" ..
+    "|cffffffff/focusname name|r - Set focus by player name.\n" ..
+    "|cffffffff/castfocus spell|r - Cast a spell on your focus without changing your target.\n" ..
+    "|cffffffff/swapfocus|r - Swap your target and focus.\n\n" ..
     "|cffaaaaaaAliases: /tsfocusname, /tscastfocus, /tsswapfocus|r"
 )
 
