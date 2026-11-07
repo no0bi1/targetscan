@@ -77,8 +77,8 @@ focusHelp:EnableMouse(true)
 focusHelp:SetClampedToScreen(true)
 focusHelp:RegisterForDrag("LeftButton")
 focusHelp:SetBackdrop({
-    bgFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Background",
-    edgeFile = "Interface\\\\DialogFrame\\\\UI-DialogBox-Border",
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
     tile = true,
     tileSize = 32,
     edgeSize = 32,
