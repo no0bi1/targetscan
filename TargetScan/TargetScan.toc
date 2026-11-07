@@ -1,5 +1,6 @@
 ## Interface: 11200
 ## Title: TargetScan
-## Notes: Type a name (or shift-click one) and it keeps trying to target it. Open with /tar target
+## Notes: Target scanner with ClassicAPI focus management.
 ## SavedVariables: TargetScanDB
 TargetScan.lua
+Focus.lua
