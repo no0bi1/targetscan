@@ -31,8 +31,8 @@ local function CreateFocusFrame(name, unit, title)
     frame:RegisterForDrag("LeftButton")
     frame:SetClampedToScreen(true)
     frame:SetBackdrop({
-        bgFile = "Interface\\\DialogFrame\\\UI-DialogBox-Background",
-        edgeFile = "Interface\\\Tooltips\\\UI-Tooltip-Border",
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         tile = true, tileSize = 16, edgeSize = 12,
         insets = { left = 3, right = 3, top = 3, bottom = 3 }
     })
@@ -62,7 +62,7 @@ local function CreateFocusFrame(name, unit, title)
     health:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 7, 7)
     health:SetWidth(166)
     health:SetHeight(10)
-    health:SetStatusBarTexture("Interface\\\TargetingFrame\\\UI-StatusBar")
+    health:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
     health:SetStatusBarColor(0.15, 0.75, 0.15)
     health:SetMinMaxValues(0, 1)
     health:SetValue(1)
@@ -80,7 +80,7 @@ local function CreateFocusFrame(name, unit, title)
     power:SetPoint("BOTTOMLEFT", health, "TOPLEFT", 0, 2)
     power:SetWidth(166)
     power:SetHeight(5)
-    power:SetStatusBarTexture("Interface\\\TargetingFrame\\\UI-StatusBar")
+    power:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
     power:SetStatusBarColor(0.1, 0.35, 0.9)
     power:SetMinMaxValues(0, 1)
     power:SetValue(1)
