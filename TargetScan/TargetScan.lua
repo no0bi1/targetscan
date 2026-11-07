@@ -587,8 +587,11 @@ local function CreateFocusFrame(name, unit, title)
         SaveFramePosition(this, this.unit == "focus" and "focusPos" or "focusTargetPos")
     end)
 
+    frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     frame:SetScript("OnClick", function()
-        if UnitExists(this.unit) then
+        if arg1 == "RightButton" then
+            ClearFocus()
+        elseif arg1 == "LeftButton" and UnitExists(this.unit) then
             TargetUnit(this.unit)
         end
     end)
