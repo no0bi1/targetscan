@@ -708,6 +708,11 @@ rareScannerFrame:SetScript("OnUpdate", function()
         if type(rare) == "table" and rare.guid then
             currentlyVisible[rare.guid] = true
             if not rareSeen[rare.guid] then
+                -- XP3 targets the exact visible rare by GUID; no name lookup or unit token needed.
+                if UnitXP then
+                    pcall(UnitXP, "target", "guid", rare.guid)
+                end
+
                 DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
                 PlaySound("RaidWarning")
             end
