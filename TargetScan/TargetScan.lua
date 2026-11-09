@@ -18,10 +18,7 @@ local isRescan = false -- true while a rescan is pending (skips raid marker)
 local rareScanEnabled = false
 local rareScanTimer = 0
 local RARE_SCAN_INTERVAL = 0.5
-local rareAlertMessage = "Rare found!"
 local rareSeen = {}
-local alertEditBox
-local alertEditHasFocus = false
 local catcher
 
 -- Real value is loaded on VARIABLES_LOADED (saved vars are not available yet).
@@ -203,52 +200,6 @@ eb:SetBackdrop({
 
 eb:SetBackdropColor(0, 0, 0, 0.8)
 
--- Custom alert message used when a new rare is detected.
-alertEditBox = CreateFrame("EditBox", "TargetScanRareAlertEditBox", f)
-alertEditBox:SetWidth(190)
-alertEditBox:SetHeight(20)
-alertEditBox:SetPoint("TOP", eb, "BOTTOM", 0, -3)
-alertEditBox:SetAutoFocus(false)
-alertEditBox:SetMaxLetters(120)
-alertEditBox:SetFontObject(ChatFontNormal)
-alertEditBox:SetTextInsets(6, 6, 0, 0)
-alertEditBox:SetBackdrop({
-    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 12,
-    insets = { left = 3, right = 3, top = 3, bottom = 3 }
-})
-alertEditBox:SetBackdropColor(0, 0, 0, 0.8)
-alertEditBox:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_TOP")
-    GameTooltip:SetText("Rare alert message")
-    GameTooltip:AddLine("This text is shown in chat when a new rare is detected.", 1, 1, 1, true)
-    GameTooltip:Show()
-end)
-alertEditBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
-alertEditBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
-alertEditBox:SetScript("OnEscapePressed", function()
-    this:SetText(rareAlertMessage)
-    this:ClearFocus()
-end)
-alertEditBox:SetScript("OnEditFocusGained", function()
-    alertEditHasFocus = true
-    catcher:Show()
-end)
-alertEditBox:SetScript("OnEditFocusLost", function()
-    alertEditHasFocus = false
-    if not editHasFocus then catcher:Hide() end
-    local value = this:GetText()
-    if value and value ~= "" then
-        rareAlertMessage = value
-    else
-        rareAlertMessage = "Rare found!"
-        this:SetText(rareAlertMessage)
-    end
-    if type(TargetScanDB) ~= "table" then TargetScanDB = {} end
-    TargetScanDB.rareAlertMessage = rareAlertMessage
-end)
-
 ---------------------------------------------------------------
 -- Click catcher
 ---------------------------------------------------------------
@@ -261,7 +212,6 @@ catcher:Hide()
 
 catcher:SetScript("OnMouseDown", function()
     eb:ClearFocus()
-    if alertEditBox then alertEditBox:ClearFocus() end
 end)
 
 ---------------------------------------------------------------
@@ -269,7 +219,7 @@ end)
 ---------------------------------------------------------------
 
 local status = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-status:SetPoint("TOP", alertEditBox, "BOTTOM", 0, -6)
+status:SetPoint("TOP", eb, "BOTTOM", 0, -6)
 status:SetText("Idle")
 
 ---------------------------------------------------------------
@@ -462,10 +412,6 @@ loader:SetScript("OnEvent", function()
     -- Restore rare scanner settings.
     rareScanEnabled = TargetScanDB.rareScanEnabled and true or false
     rareScanCheck:SetChecked(rareScanEnabled)
-    if type(TargetScanDB.rareAlertMessage) == "string" and TargetScanDB.rareAlertMessage ~= "" then
-        rareAlertMessage = TargetScanDB.rareAlertMessage
-    end
-    alertEditBox:SetText(rareAlertMessage)
 
     -- Window position
     local p = TargetScanDB.pos
@@ -553,7 +499,7 @@ end)
 
 eb:SetScript("OnEditFocusLost", function()
     editHasFocus = false
-    if not alertEditHasFocus then catcher:Hide() end
+    catcher:Hide()
 end)
 
 ---------------------------------------------------------------
@@ -682,7 +628,6 @@ end)
 
 f:SetScript("OnHide", function()
     eb:ClearFocus()
-    if alertEditBox then alertEditBox:ClearFocus() end
 end)
 
 
@@ -726,7 +671,12 @@ rareScannerFrame:SetScript("OnUpdate", function()
         if ok and targeted then
             -- Apply the currently selected default raid marker to the acquired rare.
             SetRaidTarget("target", selectedRaidIcon)
-            DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
+            local npcName = UnitName("target") or "Unknown rare"
+            local distance = tonumber(nearestNewRare.distance) or 0
+            DEFAULT_CHAT_FRAME:AddMessage(
+                "|cffffd200" .. npcName .. " found - " ..
+                string.format("%.1f", distance) .. " yards|r"
+            )
             PlaySound("RaidWarning")
         else
             -- Leave failed acquisitions unseen so the next scan retries them.
