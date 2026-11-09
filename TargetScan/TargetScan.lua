@@ -287,10 +287,6 @@ end)
 -- Raid target marker selector
 ---------------------------------------------------------------
 
-local iconLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-iconLabel:SetPoint("TOP", clear, "BOTTOM", 0, -7)
-iconLabel:SetText("Default raid marker")
-
 local raidIconButtons = {}
 
 local function UpdateRaidIconSelection()
@@ -373,17 +369,20 @@ SetRescanShown = function(show)
         rescan:Hide()
     end
 
-    iconLabel:ClearAllPoints()
-    iconLabel:SetPoint("TOP", clear, "BOTTOM", 0, -7 - off)
-
     local n
 
     for n = 1, 8 do
         raidIconButtons[n]:ClearAllPoints()
-        raidIconButtons[n]:SetPoint("TOP", f, "TOP", -87.5 + (n - 1) * 25, -162 - off)
+        raidIconButtons[n]:SetPoint(
+            "TOP",
+            clear,
+            "BOTTOM",
+            -87.5 + (n - 1) * 25,
+            -7 - off
+        )
     end
 
-    f:SetHeight(200 + off)
+    f:SetHeight(150 + off)
 end
 
 ---------------------------------------------------------------
