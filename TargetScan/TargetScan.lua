@@ -704,20 +704,33 @@ rareScannerFrame:SetScript("OnUpdate", function()
     if not ok or type(rares) ~= "table" then return end
 
     local currentlyVisible = {}
-    for _, rare in pairs(rares) do
+    local nearestNewRare = nil
+
+    -- XP3 returns a numerically indexed list sorted nearest-first.
+    -- Use ipairs so the first unseen entry is the closest newly detected rare.
+    for _, rare in ipairs(rares) do
         if type(rare) == "table" and rare.guid then
             currentlyVisible[rare.guid] = true
-            if not rareSeen[rare.guid] then
-                -- XP3 targets the exact visible rare by GUID; no name lookup or unit token needed.
-                if UnitXP then
-                    pcall(UnitXP, "target", "guid", rare.guid)
-                end
 
-                DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
-                PlaySound("RaidWarning")
+            if not rareSeen[rare.guid] and not nearestNewRare then
+                nearestNewRare = rare
             end
         end
     end
+
+    -- Acquire only one rare per scan pass. This prevents rapid target
+    -- switching when several rares are visible at the same time.
+    if nearestNewRare then
+        local ok, targeted = pcall(UnitXP, "target", "guid", nearestNewRare.guid)
+
+        if ok and targeted then
+            DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
+            PlaySound("RaidWarning")
+        end
+    end
+
+    -- Keep only currently visible GUIDs. A rare that leaves visibility and
+    -- later returns can trigger a fresh alert and target acquisition.
     rareSeen = currentlyVisible
 end)
 
