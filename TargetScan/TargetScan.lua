@@ -674,7 +674,7 @@ rareScannerFrame:SetScript("OnUpdate", function()
             local npcName = UnitName("target") or "Unknown rare"
             local distance = tonumber(nearestNewRare.distance) or 0
             DEFAULT_CHAT_FRAME:AddMessage(
-                "|cffffd200" .. npcName .. " found - " ..
+                "|cffffd200Rare NPC - " .. npcName .. " found - " ..
                 string.format("%.1f", distance) .. " yards|r"
             )
             PlaySound("RaidWarning")
