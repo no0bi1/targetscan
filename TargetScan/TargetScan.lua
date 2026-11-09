@@ -726,6 +726,9 @@ rareScannerFrame:SetScript("OnUpdate", function()
         if ok and targeted then
             DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
             PlaySound("RaidWarning")
+        else
+            -- Leave failed acquisitions unseen so the next scan retries them.
+            currentlyVisible[nearestNewRare.guid] = nil
         end
     end
 
