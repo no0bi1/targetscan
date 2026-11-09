@@ -724,6 +724,8 @@ rareScannerFrame:SetScript("OnUpdate", function()
         local ok, targeted = pcall(UnitXP, "target", "guid", nearestNewRare.guid)
 
         if ok and targeted then
+            -- Apply the currently selected default raid marker to the acquired rare.
+            SetRaidTarget("target", selectedRaidIcon)
             DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
             PlaySound("RaidWarning")
         else
