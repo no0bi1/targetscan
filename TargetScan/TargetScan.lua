@@ -14,6 +14,16 @@ local rescan -- Rescan button, created below
 local SetRescanShown -- shows/hides Rescan and adjusts the layout
 local isRescan = false -- true while a rescan is pending (skips raid marker)
 
+-- Rare scanning runs independently of the main window.
+local rareScanEnabled = false
+local rareScanTimer = 0
+local RARE_SCAN_INTERVAL = 0.5
+local rareAlertMessage = "Rare found!"
+local rareSeen = {}
+local alertEditBox
+local alertEditHasFocus = false
+local catcher
+
 -- Real value is loaded on VARIABLES_LOADED (saved vars are not available yet).
 local selectedRaidIcon = 5
 
@@ -23,7 +33,7 @@ local selectedRaidIcon = 5
 
 local f = CreateFrame("Frame", "TargetScanFrame", UIParent)
 f:SetWidth(240)
-f:SetHeight(175)
+f:SetHeight(200)
 f:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 f:SetFrameStrata("DIALOG")
 f:SetMovable(true)
@@ -147,6 +157,28 @@ focusHelpButton:SetScript("OnClick", function()
     end
 end)
 
+-- This toggle controls a scanner frame that remains active while the main window is hidden.
+local rareScanCheck = CreateFrame("CheckButton", "TargetScanRareScanCheck", f, "UICheckButtonTemplate")
+rareScanCheck:SetWidth(24)
+rareScanCheck:SetHeight(24)
+rareScanCheck:SetPoint("RIGHT", focusHelpButton, "LEFT", 2, 0)
+rareScanCheck:SetScript("OnClick", function()
+    rareScanEnabled = this:GetChecked() and true or false
+    rareScanTimer = RARE_SCAN_INTERVAL
+    rareSeen = {}
+    if type(TargetScanDB) ~= "table" then TargetScanDB = {} end
+    TargetScanDB.rareScanEnabled = rareScanEnabled
+end)
+rareScanCheck:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    GameTooltip:SetText("Continuous rare scan")
+    GameTooltip:AddLine("Scans visible units for rare and rare-elite classifications.", 1, 1, 1, true)
+    GameTooltip:AddLine("Keeps running when the Target Scan window is closed.", 1, 1, 1, true)
+    GameTooltip:AddLine("Does not target units.", 1, 1, 1, true)
+    GameTooltip:Show()
+end)
+rareScanCheck:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 ---------------------------------------------------------------
 -- Name edit box
 ---------------------------------------------------------------
@@ -171,11 +203,57 @@ eb:SetBackdrop({
 
 eb:SetBackdropColor(0, 0, 0, 0.8)
 
+-- Custom alert message used when a new rare is detected.
+alertEditBox = CreateFrame("EditBox", "TargetScanRareAlertEditBox", f)
+alertEditBox:SetWidth(190)
+alertEditBox:SetHeight(20)
+alertEditBox:SetPoint("TOP", eb, "BOTTOM", 0, -3)
+alertEditBox:SetAutoFocus(false)
+alertEditBox:SetMaxLetters(120)
+alertEditBox:SetFontObject(ChatFontNormal)
+alertEditBox:SetTextInsets(6, 6, 0, 0)
+alertEditBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 12,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 }
+})
+alertEditBox:SetBackdropColor(0, 0, 0, 0.8)
+alertEditBox:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    GameTooltip:SetText("Rare alert message")
+    GameTooltip:AddLine("This text is shown in chat when a new rare is detected.", 1, 1, 1, true)
+    GameTooltip:Show()
+end)
+alertEditBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+alertEditBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
+alertEditBox:SetScript("OnEscapePressed", function()
+    this:SetText(rareAlertMessage)
+    this:ClearFocus()
+end)
+alertEditBox:SetScript("OnEditFocusGained", function()
+    alertEditHasFocus = true
+    catcher:Show()
+end)
+alertEditBox:SetScript("OnEditFocusLost", function()
+    alertEditHasFocus = false
+    if not editHasFocus then catcher:Hide() end
+    local value = this:GetText()
+    if value and value ~= "" then
+        rareAlertMessage = value
+    else
+        rareAlertMessage = "Rare found!"
+        this:SetText(rareAlertMessage)
+    end
+    if type(TargetScanDB) ~= "table" then TargetScanDB = {} end
+    TargetScanDB.rareAlertMessage = rareAlertMessage
+end)
+
 ---------------------------------------------------------------
 -- Click catcher
 ---------------------------------------------------------------
 
-local catcher = CreateFrame("Button", nil, UIParent)
+catcher = CreateFrame("Button", nil, UIParent)
 catcher:SetAllPoints(UIParent)
 catcher:SetFrameStrata("BACKGROUND")
 catcher:EnableMouse(true)
@@ -183,6 +261,7 @@ catcher:Hide()
 
 catcher:SetScript("OnMouseDown", function()
     eb:ClearFocus()
+    if alertEditBox then alertEditBox:ClearFocus() end
 end)
 
 ---------------------------------------------------------------
@@ -190,7 +269,7 @@ end)
 ---------------------------------------------------------------
 
 local status = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-status:SetPoint("TOP", eb, "BOTTOM", 0, -8)
+status:SetPoint("TOP", alertEditBox, "BOTTOM", 0, -6)
 status:SetText("Idle")
 
 ---------------------------------------------------------------
@@ -285,7 +364,7 @@ for i = 1, 8 do
     button:SetID(i)
     button:SetWidth(24)
     button:SetHeight(24)
-    button:SetPoint("TOP", f, "TOP", -87.5 + (i - 1) * 25, -137)
+    button:SetPoint("TOP", f, "TOP", -87.5 + (i - 1) * 25, -162)
 
     button:SetBackdrop({
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -351,10 +430,10 @@ SetRescanShown = function(show)
 
     for n = 1, 8 do
         raidIconButtons[n]:ClearAllPoints()
-        raidIconButtons[n]:SetPoint("TOP", f, "TOP", -87.5 + (n - 1) * 25, -137 - off)
+        raidIconButtons[n]:SetPoint("TOP", f, "TOP", -87.5 + (n - 1) * 25, -162 - off)
     end
 
-    f:SetHeight(175 + off)
+    f:SetHeight(200 + off)
 end
 
 ---------------------------------------------------------------
@@ -379,6 +458,14 @@ loader:SetScript("OnEvent", function()
     end
 
     TargetScanDB.raidIcon = selectedRaidIcon
+
+    -- Restore rare scanner settings.
+    rareScanEnabled = TargetScanDB.rareScanEnabled and true or false
+    rareScanCheck:SetChecked(rareScanEnabled)
+    if type(TargetScanDB.rareAlertMessage) == "string" and TargetScanDB.rareAlertMessage ~= "" then
+        rareAlertMessage = TargetScanDB.rareAlertMessage
+    end
+    alertEditBox:SetText(rareAlertMessage)
 
     -- Window position
     local p = TargetScanDB.pos
@@ -466,7 +553,7 @@ end)
 
 eb:SetScript("OnEditFocusLost", function()
     editHasFocus = false
-    catcher:Hide()
+    if not alertEditHasFocus then catcher:Hide() end
 end)
 
 ---------------------------------------------------------------
@@ -595,9 +682,39 @@ end)
 
 f:SetScript("OnHide", function()
     eb:ClearFocus()
+    if alertEditBox then alertEditBox:ClearFocus() end
 end)
 
 
+
+---------------------------------------------------------------
+-- Continuous rare scanner
+---------------------------------------------------------------
+
+local rareScannerFrame = CreateFrame("Frame", "TargetScanRareScannerFrame", UIParent)
+rareScannerFrame:SetScript("OnUpdate", function()
+    if not rareScanEnabled or not UnitXP then return end
+
+    rareScanTimer = rareScanTimer + arg1
+    if rareScanTimer < RARE_SCAN_INTERVAL then return end
+    rareScanTimer = 0
+
+    -- XP3 returns records containing GUID, distance and classification.
+    local ok, rares = pcall(UnitXP, "scan", "rares")
+    if not ok or type(rares) ~= "table" then return end
+
+    local currentlyVisible = {}
+    for _, rare in pairs(rares) do
+        if type(rare) == "table" and rare.guid then
+            currentlyVisible[rare.guid] = true
+            if not rareSeen[rare.guid] then
+                DEFAULT_CHAT_FRAME:AddMessage("|cffffd200" .. rareAlertMessage .. "|r")
+                PlaySound("RaidWarning")
+            end
+        end
+    end
+    rareSeen = currentlyVisible
+end)
 
 ---------------------------------------------------------------
 -- Native /tar and /target hook
