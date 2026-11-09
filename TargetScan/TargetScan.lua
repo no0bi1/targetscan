@@ -314,7 +314,7 @@ for i = 1, 8 do
     button:SetID(i)
     button:SetWidth(24)
     button:SetHeight(24)
-    button:SetPoint("TOP", f, "TOP", -87.5 + (i - 1) * 25, -162)
+    button:SetPoint("TOP", clear, "BOTTOM", -87.5 + (i - 1) * 25, -7)
 
     button:SetBackdrop({
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
